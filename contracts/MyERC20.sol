@@ -7,4 +7,9 @@ contract MyERC20 is ERC20 {
     constructor() ERC20("MyERC20", "MER") {
         _mint(msg.sender, 10000 * 10 ** decimals());
     }
+
+    // can freely mint ERC20 token
+    function freeMint() external {
+        _mint(msg.sender, 10000 * 10 ** decimals());
+    }
 }

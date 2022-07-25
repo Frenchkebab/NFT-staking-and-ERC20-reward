@@ -8,17 +8,21 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 
 contract MyERC721 is ERC721, Ownable {
     using Counters for Counters.Counter;
+    uint256 public RATE = 100 * 10 ** 18;
+    
     IERC20 public tokenAddress;
-    uint public RATE = 100 * 10 ** 18;
 
     Counters.Counter private _tokenIdCounter;
 
-    constructor(address _tokenAddress) ERC721("MyToken", "MTK") {
+    constructor() ERC721("MyNFT", "MFT") {
+        safeMint();
+    }
+
+    function setERC20Contract(address _tokenAddress) public {
         tokenAddress = IERC20(_tokenAddress);
     }
 
     function safeMint() public {
-        tokenAddress.transferFrom(msg.sender, address(this), RATE);
         uint256 tokenId = _tokenIdCounter.current();
         _tokenIdCounter.increment();
         _safeMint(msg.sender, tokenId);

@@ -1,47 +1,61 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.7;
 
-import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
-import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Receiver.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
-contract NFTStaker {
-    IERC1155 public parentNFT;
+contract NFTStaker is IERC721Receiver{
+    IERC721 public myNFT;
+    IERC20 public myERC20;
 
-    struct Stake {
-        uint256 tokenId;
-        uint256 amount;
+    // Need to stake at least 10 seconds to get reward 
+    uint256 constant REWARD_TIME = 10;
+
+    struct StakedToken {
+        address tokenOwner;
         uint256 timestamp;
     }
- 
-    // map staker address to stake details
-    mapping(address => Stake) public stakes;
 
-    // map staker to total staking time
-    mapping(address => uint256) public stakingTime;
+    // map tokenId to stake details
+    mapping(uint256 => StakedToken) public stakes;
 
-    constructor(IERC1155 _NFTContractAddress) {
-        parentNFT = IERC1155(_NFTContractAddress);
+    // map tokenId to total staking time
+    mapping(uint256 => uint256) public stakingTime;
+
+    constructor(IERC721 _NFTContractAddress, IERC20 _tokenContractAddress) {
+        myNFT = IERC721(_NFTContractAddress);
+        myERC20 = IERC20(_tokenContractAddress);
     }
 
-    function stake(uint256 _tokenId, uint256 _amount) public {
-        stakes[msg.sender] = Stake(_tokenId, _amount, block.timestamp);
-        parentNFT.safeTransferFrom(msg.sender, address(this), _tokenId, _amount, "0x00");
+    function stake(uint256 _tokenId) external {
+        require(myNFT.ownerOf(_tokenId) == msg.sender, "Caller is not owner of the token");
+        stakes[_tokenId] = StakedToken(msg.sender, block.timestamp);
+        myNFT.safeTransferFrom(msg.sender, address(this), _tokenId, "0x00");
     }
+    
+    // checks if the token has been staked more than REWARD_TIME
+    // resets after unstaking
+    function unstake(uint256 _tokenId) external {
+        require(stakes[_tokenId].tokenOwner == msg.sender, "Caller is not owner of the token");
+        myNFT.safeTransferFrom(address(this), msg.sender, _tokenId, "0x00");
+        uint256 stakedTime = block.timestamp - stakes[_tokenId].timestamp;
 
-    function unstake() public {
-        parentNFT.safeTransferFrom(address(this), msg.sender, stakes[msg.sender].tokenId, stakes[msg.sender].amount, "0x00");
-        stakingTime[msg.sender] += (block.timestamp - stakes[msg.sender].timestamp);
-        delete stakes[msg.sender];
+        if(stakedTime >= REWARD_TIME) {
+            uint256 cycles = stakedTime / REWARD_TIME;
+            uint256 reward = 10 * 10**18 * cycles;
+            myERC20.transfer(msg.sender, reward);
+        }
+        delete stakes[_tokenId];
     }
 
     // This function checks if the receiver can understand what's going on
-    function onERC1155Received(
+    function onERC721Received(
         address operator,
         address from,
-        uint256 id,
-        uint256 value,
+        uint256 tokenId,
         bytes calldata data
-    ) external returns (bytes4) {
-        return bytes4(keccak256("onERC1155Received(address,address,uint256,uint256,bytes)"));
+    ) external override returns (bytes4) {
+        return this.onERC721Received.selector;
     }
 }
