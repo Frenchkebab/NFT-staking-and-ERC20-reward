@@ -1,4 +1,4 @@
-## staking
+## Staking
 
 A classic feature of NFTs is being able to receive them to stake tokens.
 
