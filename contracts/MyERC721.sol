@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 contract MyERC721 is ERC721, Ownable {
     using Counters for Counters.Counter;
     uint256 public RATE = 100 * 10 ** 18;
-    
+
     IERC20 public tokenAddress;
 
     Counters.Counter private _tokenIdCounter;

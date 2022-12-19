@@ -5,11 +5,11 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
-contract NFTStaker is IERC721Receiver{
+contract NFTStaker is IERC721Receiver {
     IERC721 public myNFT;
     IERC20 public myERC20;
 
-    // Need to stake at least 10 seconds to get reward 
+    // Need to stake at least 10 seconds to get reward
     uint256 constant REWARD_TIME = 10;
 
     struct StakedToken {
@@ -33,7 +33,7 @@ contract NFTStaker is IERC721Receiver{
         stakes[_tokenId] = StakedToken(msg.sender, block.timestamp);
         myNFT.safeTransferFrom(msg.sender, address(this), _tokenId, "0x00");
     }
-    
+
     // checks if the token has been staked more than REWARD_TIME
     // resets after unstaking
     function unstake(uint256 _tokenId) external {
@@ -41,9 +41,9 @@ contract NFTStaker is IERC721Receiver{
         myNFT.safeTransferFrom(address(this), msg.sender, _tokenId, "0x00");
         uint256 stakedTime = block.timestamp - stakes[_tokenId].timestamp;
 
-        if(stakedTime >= REWARD_TIME) {
+        if (stakedTime >= REWARD_TIME) {
             uint256 cycles = stakedTime / REWARD_TIME;
-            uint256 reward = 10 * 10**18 * cycles;
+            uint256 reward = 10 * 10 ** 18 * cycles;
             myERC20.transfer(msg.sender, reward);
         }
         delete stakes[_tokenId];
