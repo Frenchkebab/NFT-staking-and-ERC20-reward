@@ -94,4 +94,6 @@ describe('NFT Staking with ERC20', function () {
     expect(await myNFT.balanceOf(holder1.address)).to.equal('1');
     expect(await myNFT.ownerOf('0')).to.equal(holder1.address);
   });
+
+  it();
 });
