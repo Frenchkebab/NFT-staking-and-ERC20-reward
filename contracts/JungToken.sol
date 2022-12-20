@@ -16,6 +16,7 @@ contract JungToken is Initializable, ERC20Upgradeable, UUPSUpgradeable, OwnableU
         __ERC20_init("JungToken", "JNT");
         __Ownable_init();
         tokenPrice = 3;
+        _mint(msg.sender, 1000 * 10 ** 18);
     }
 
     /**

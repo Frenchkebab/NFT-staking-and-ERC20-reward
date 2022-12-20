@@ -16,7 +16,7 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 contract NFTStaker is Initializable, OwnableUpgradeable, IERC721ReceiverUpgradeable, UUPSUpgradeable {
     IERC721 public nftContract;
-    IERC20 public erc20Contract;
+    IERC20 public tokenContract;
 
     /// @dev Need to stake at least 24 hours to get reward
     uint256 constant REWARD_TIME = 24 hours;
@@ -31,7 +31,8 @@ contract NFTStaker is Initializable, OwnableUpgradeable, IERC721ReceiverUpgradea
 
     function initialize(IERC20 _tokenContractAddress, IERC721 _NFTContractAddress) public initializer {
         nftContract = IERC721(_NFTContractAddress);
-        erc20Contract = IERC20(_tokenContractAddress);
+        tokenContract = IERC20(_tokenContractAddress);
+        __Ownable_init();
     }
 
     function stake(uint256 _tokenId) external {
@@ -53,7 +54,7 @@ contract NFTStaker is Initializable, OwnableUpgradeable, IERC721ReceiverUpgradea
         require(stakedTime >= REWARD_TIME, "NFTStaker: Need to wait more to unstake");
         uint256 cycles = stakedTime / REWARD_TIME;
         uint256 reward = 10 * 10 ** 18 * cycles;
-        erc20Contract.transfer(msg.sender, reward);
+        tokenContract.transfer(msg.sender, reward);
 
         delete stakes[_tokenId];
     }
