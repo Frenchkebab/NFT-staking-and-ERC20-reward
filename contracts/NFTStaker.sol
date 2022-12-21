@@ -68,8 +68,6 @@ contract NFTStaker is Initializable, OwnableUpgradeable, IERC721ReceiverUpgradea
         return this.onERC721Received.selector;
     }
 
-    /**
-     * @dev required by the OZ UUPS module
-     */
+    /// @dev required by the OZ UUPS module
     function _authorizeUpgrade(address) internal override onlyOwner {}
 }

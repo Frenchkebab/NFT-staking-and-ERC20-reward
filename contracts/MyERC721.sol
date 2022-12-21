@@ -23,38 +23,28 @@ contract MyNFT is Initializable, ERC721Upgradeable, OwnableUpgradeable, UUPSUpgr
         tokenAddress = _tokenAddress;
     }
 
-    /**
-     * @dev withdraw remaining eth in contract
-     */
+    /// @dev withdraw remaining eth in contract
     function withdraw() public onlyOwner {
         payable(msg.sender).call{value: address(this).balance}("");
     }
 
-    /**
-     * @dev withdraw ERC20 token of this contract
-     */
+    /// @dev withdraw ERC20 token of this contract
     function withdrawToken() public onlyOwner {
         tokenAddress.transfer(msg.sender, tokenAddress.balanceOf(address(this)));
     }
 
-    /**
-     * @dev sets the amount of ERC20 token needed to mint NFT
-     */
+    /// @dev sets the amount of ERC20 token needed to mint NFT
     function setMintPrice(uint256 _price) external onlyOwner {
         mintPrice = _price;
     }
 
-    /**
-     * @dev mint NFT with 'mintPrice' tokens
-     */
+    /// @dev mint NFT with 'mintPrice' tokens
     function mint() external payable {
         require(tokenAddress.transferFrom(msg.sender, address(this), mintPrice), "MyNFT: token transfer failed");
         _mint(msg.sender, totalSupply);
         totalSupply++;
     }
 
-    /**
-     * @dev required by the OZ UUPS module
-     */
+    /// @dev required by the OZ UUPS module
     function _authorizeUpgrade(address) internal override onlyOwner {}
 }
