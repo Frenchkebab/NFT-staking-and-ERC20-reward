@@ -11,15 +11,13 @@ describe('NFT Staking with ERC20', function () {
   const STAKE_REWARD = ethers.utils.parseEther('10');
 
   let owner;
-  let holder1;
-  let holder2;
-  let holder3;
+  let holder;
   let jungToken;
   let myNFT;
   let nftStaker;
 
   async function deployFixture() {
-    [owner, holder1, holder2, holder3] = await ethers.getSigners();
+    [owner, holder] = await ethers.getSigners();
 
     // deploy ERC20 Token (JungToken)
     const JungToken = await (
@@ -49,7 +47,7 @@ describe('NFT Staking with ERC20', function () {
       { kind: 'uups' }
     );
 
-    return { owner, holder1, holder2, holder3, jungToken, myNFT, nftStaker };
+    return { owner, holder, jungToken, myNFT, nftStaker };
   }
 
   describe('ERC20 JungToken', function () {
@@ -62,18 +60,18 @@ describe('NFT Staking with ERC20', function () {
     });
 
     it('Buy JungToken with `amount * tokenPrice` wei', async function () {
-      const { holder1, jungToken } = await loadFixture(deployFixture);
+      const { holder, jungToken } = await loadFixture(deployFixture);
 
-      expect(await jungToken.balanceOf(holder1.address)).to.equal(0);
+      expect(await jungToken.balanceOf(holder.address)).to.equal(0);
 
       const buyTokenTx = await jungToken
-        .connect(holder1)
+        .connect(holder)
         .buyToken(TOKEN_AMOUNT, {
           value: TOKEN_AMOUNT.mul(TOKEN_PRICE),
         });
       await buyTokenTx.wait();
 
-      expect(await jungToken.balanceOf(holder1.address)).to.equal(TOKEN_AMOUNT);
+      expect(await jungToken.balanceOf(holder.address)).to.equal(TOKEN_AMOUNT);
     });
   });
 
@@ -88,38 +86,38 @@ describe('NFT Staking with ERC20', function () {
     });
 
     it('Mint MyNFT with `mintPrice` JungToken', async function () {
-      const { holder1, jungToken, myNFT } = await loadFixture(deployFixture);
+      const { holder, jungToken, myNFT } = await loadFixture(deployFixture);
 
       // holder initially has no NFT
-      expect(await myNFT.balanceOf(holder1.address)).to.equal('0');
+      expect(await myNFT.balanceOf(holder.address)).to.equal('0');
 
       // buy TOKEN_AMOUNT JungTokens
       const buyTokenTx = await jungToken
-        .connect(holder1)
+        .connect(holder)
         .buyToken(TOKEN_AMOUNT, {
           value: TOKEN_AMOUNT.mul(TOKEN_PRICE),
         });
       await buyTokenTx.wait();
 
       // reverts before approval
-      await expect(myNFT.connect(holder1).mint()).to.be.revertedWith(
+      await expect(myNFT.connect(holder).mint()).to.be.revertedWith(
         'ERC20: insufficient allowance'
       );
 
-      // approve myNFT contract to spend JungToken on holder1's behalf
+      // approve myNFT contract to spend JungToken on holder's behalf
       const approve = await jungToken
-        .connect(holder1)
-        .approve(myNFT.address, await jungToken.balanceOf(holder1.address));
+        .connect(holder)
+        .approve(myNFT.address, await jungToken.balanceOf(holder.address));
       await approve.wait();
 
       // Mint token
-      await (await myNFT.connect(holder1).mint()).wait();
+      await (await myNFT.connect(holder).mint()).wait();
 
-      expect(await jungToken.balanceOf(holder1.address)).to.equal(
+      expect(await jungToken.balanceOf(holder.address)).to.equal(
         TOKEN_AMOUNT.sub(MINT_PRICE)
       );
-      expect(await myNFT.balanceOf(holder1.address)).to.equal('1');
-      expect(await myNFT.ownerOf(TOKEN_0)).to.equal(holder1.address);
+      expect(await myNFT.balanceOf(holder.address)).to.equal('1');
+      expect(await myNFT.ownerOf(TOKEN_0)).to.equal(holder.address);
     });
   });
 
@@ -134,12 +132,12 @@ describe('NFT Staking with ERC20', function () {
       expect(await nftStaker.nftContract()).to.equal(myNFT.address);
     });
 
-    describe('Stake and get rewards', async function () {
+    describe('Stake NFTs and get reward', async function () {
       before('', async function () {
-        const { owner, holder1, jungToken, myNFT, nftStaker } =
+        const { owner, holder, jungToken, myNFT, nftStaker } =
           await loadFixture(deployFixture);
         this.owner = owner;
-        this.holder1 = holder1;
+        this.holder = holder;
         this.jungToken = jungToken;
         this.myNFT = myNFT;
         this.nftStaker = nftStaker;
@@ -158,12 +156,12 @@ describe('NFT Staking with ERC20', function () {
 
       it('Buy JungToken', async function () {
         await (
-          await this.jungToken.connect(this.holder1).buyToken(TOKEN_AMOUNT, {
+          await this.jungToken.connect(this.holder).buyToken(TOKEN_AMOUNT, {
             value: TOKEN_AMOUNT.mul(await this.jungToken.tokenPrice()),
           })
         ).wait();
 
-        expect(await this.jungToken.balanceOf(this.holder1.address)).to.equal(
+        expect(await this.jungToken.balanceOf(this.holder.address)).to.equal(
           TOKEN_AMOUNT
         );
       });
@@ -171,45 +169,43 @@ describe('NFT Staking with ERC20', function () {
       it('Mint MyNFT', async function () {
         await (
           await this.jungToken
-            .connect(this.holder1)
+            .connect(this.holder)
             .approve(this.myNFT.address, TOKEN_AMOUNT)
         ).wait();
         // mint NFT with tokenId 0
-        await (await this.myNFT.connect(this.holder1).mint()).wait();
+        await (await this.myNFT.connect(this.holder).mint()).wait();
         // mint NFT with tokenId 1
-        await (await this.myNFT.connect(this.holder1).mint()).wait();
+        await (await this.myNFT.connect(this.holder).mint()).wait();
 
-        expect(await this.myNFT.balanceOf(this.holder1.address)).to.equal('2');
-        expect(await this.myNFT.ownerOf(TOKEN_0)).to.equal(
-          this.holder1.address
-        );
+        expect(await this.myNFT.balanceOf(this.holder.address)).to.equal('2');
+        expect(await this.myNFT.ownerOf(TOKEN_0)).to.equal(this.holder.address);
       });
 
       it('Stake NFT token 0 and token 1', async function () {
         const approveTx = await this.myNFT
-          .connect(holder1)
+          .connect(holder)
           .approve(this.nftStaker.address, TOKEN_0);
         await approveTx.wait();
         const approveTx2 = await this.myNFT
-          .connect(holder1)
+          .connect(holder)
           .approve(this.nftStaker.address, TOKEN_1);
         await approveTx2.wait();
 
         const stakeTx = await this.nftStaker
-          .connect(this.holder1)
+          .connect(this.holder)
           .stake(TOKEN_0);
         await stakeTx.wait();
 
         const stakeTx2 = await this.nftStaker
-          .connect(this.holder1)
+          .connect(this.holder)
           .stake(TOKEN_1);
         await stakeTx2.wait();
 
         expect((await this.nftStaker.stakes(TOKEN_0)).tokenOwner).to.equal(
-          this.holder1.address
+          this.holder.address
         );
         expect((await this.nftStaker.stakes(TOKEN_1)).tokenOwner).to.equal(
-          this.holder1.address
+          this.holder.address
         );
       });
 
@@ -225,14 +221,14 @@ describe('NFT Staking with ERC20', function () {
         expect(timestampIn24Hours).to.equal(currentTimetamp + twentyFourHours);
 
         const jungTokenBalanceBefore = await this.jungToken.balanceOf(
-          this.holder1.address
+          this.holder.address
         );
         const unstake = await this.nftStaker
-          .connect(this.holder1)
+          .connect(this.holder)
           .unstake(TOKEN_0);
         await unstake.wait();
         const jungTokenBalanceAfter = await this.jungToken.balanceOf(
-          this.holder1.address
+          this.holder.address
         );
 
         expect(jungTokenBalanceAfter).to.equal(
@@ -253,14 +249,14 @@ describe('NFT Staking with ERC20', function () {
         expect(timestampIn72Hours).to.equal(currentTimetamp + seventyTwoHours);
 
         const jungTokenBalanceBefore = await this.jungToken.balanceOf(
-          this.holder1.address
+          this.holder.address
         );
         const unstake = await this.nftStaker
-          .connect(this.holder1)
+          .connect(this.holder)
           .unstake(TOKEN_1);
         await unstake.wait();
         const jungTokenBalanceAfter = await this.jungToken.balanceOf(
-          this.holder1.address
+          this.holder.address
         );
 
         expect(jungTokenBalanceAfter).to.equal(
