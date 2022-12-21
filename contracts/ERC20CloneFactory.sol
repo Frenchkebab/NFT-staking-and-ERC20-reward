@@ -19,5 +19,6 @@ contract ERC20CloneFactory {
     ) external returns (address) {
         address clone = Clones.clone(implementation);
         ERC20Implementation(clone).initialize(_name, _symbol, _owner, _cap);
+        return clone;
     }
 }
