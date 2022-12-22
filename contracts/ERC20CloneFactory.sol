@@ -20,4 +20,13 @@ contract ERC20CloneFactory {
         emit Clone(msg.sender, clone);
         return clone;
     }
+
+    function create(string calldata _name, string calldata _symbol, uint256 _cap) external returns (address) {
+        address instance = address(new ERC20Implementation());
+        ERC20Implementation(instance).initialize(_name, _symbol, msg.sender, _cap);
+
+        /// @notice emits just to compare gas more accurately
+        emit Clone(msg.sender, instance);
+        return instance;
+    }
 }
