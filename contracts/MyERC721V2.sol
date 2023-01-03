@@ -7,6 +7,8 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
+/// @notice godModeForcefulTransfer is added
+
 contract MyNFTV2 is Initializable, ERC721Upgradeable, OwnableUpgradeable, UUPSUpgradeable {
     IERC20 public tokenAddress;
     uint256 public mintPrice;
